@@ -2,7 +2,7 @@
 #include <stdlib.h>    // malloc(), exit()
 #include <pthread.h>   // Pthreads,
 
-int sudoku_grid[9][9] = {
+int grid[9][9] = {
         {5,3,4,6,7,8,9,1,2},
         {6,7,2,1,9,5,3,4,8},
         {1,9,8,3,4,2,5,6,7},
@@ -26,21 +26,22 @@ int results[27] = {0};  // 9 rows + 9 cols + 9 boxes
 void *check_row(void *param) {
 
     parameters *p = (parameters *) param;
-    free(param); 
     int *valid = malloc(sizeof(int));   // Result being returned
     int seen[10] = {0};     // Tracks numbers already used
 
     // Loop through the row, check duplicates & invalid values
     for (int i = 0; i < 9; i++) {
-        int num = sudoku_grid[p->row][i];
+        int num = grid[p->row][i];
         if (num < 1 || num > 9 || seen[num]) {
             *valid = 0;     // Invalid row
+            free(param); 
             pthread_exit(valid);
         }
         seen[num] = 1;      
     }
 
     *valid = 1; // Valid row
+    free(param); 
     pthread_exit(valid);
 }
 
@@ -49,39 +50,40 @@ void *check_row(void *param) {
 void *check_column(void *param) {
 
     parameters *p = (parameters *) param;
-    free(param);
     int *valid = malloc(sizeof(int));   // Result being returned
     int seen[10] = {0};     // Tracks numbers already used
 
     // Loop through the column, check duplicates & invalid values
     for (int i = 0; i < 9; i++) {
-        int num = sudoku_grid[i][p->column];
+        int num = grid[i][p->column];
         if (num < 1 || num > 9 || seen[num]) {
             *valid = 0;     // Invalid column
+            free(param); 
             pthread_exit(valid);
         }
         seen[num] = 1;      
     }
 
     *valid = 1; // Valid column
+    free(param); 
     pthread_exit(valid);
 }
 
 
 // Validates a 3x3 subgrid starting at (row, column)
 void *check_subgrid(void *param) {
-    
+
     parameters *p = (parameters *) param;
-    free(param);
     int *valid = malloc(sizeof(int));
     int seen[10] = {0};  // Track digits 1–9
 
     // Loop over the 3x3 subgrid
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            int num = sudoku_grid[p->row + i][p->column + j];
+            int num = grid[p->row + i][p->column + j];
             if (num < 1 || num > 9 || seen[num]) {
                 *valid = 0;
+                free(param); 
                 pthread_exit(valid);
             }
             seen[num] = 1;
@@ -89,6 +91,7 @@ void *check_subgrid(void *param) {
     }
 
     *valid = 1;
+    free(param); 
     pthread_exit(valid);
 }
 
@@ -133,18 +136,18 @@ int main()
     }
 
     pthread_t subgrid_threads[9];
-int subgrid_idx = 0;
+    int subgrid_idx = 0;
 
-// Create threads for each 3x3 subgrid
-for (int i = 0; i < 9; i += 3) {
-    for (int j = 0; j < 9; j += 3) {
-        parameters *data = malloc(sizeof(parameters));
-        data->row = i;
-        data->column = j;
-        pthread_create(&subgrid_threads[subgrid_idx], NULL, check_subgrid, data);
-        subgrid_idx++;
+    // Create threads for each 3x3 subgrid
+    for (int i = 0; i < 9; i += 3) {
+        for (int j = 0; j < 9; j += 3) {
+            parameters *data = malloc(sizeof(parameters));
+            data->row = i;
+            data->column = j;
+            pthread_create(&subgrid_threads[subgrid_idx], NULL, check_subgrid, data);
+            subgrid_idx++;
+        }
     }
-}
 
     // Join subgrid threads and store in results[18–26]
     for (int i = 0; i < 9; i++) {
@@ -161,12 +164,26 @@ for (int i = 0; i < 9; i += 3) {
     }
 
     for (int i = 0; i < 9; i++) {
-        printf("Column %d is %s.\n", i, results[i + 9] == 1 ? "valid" : "invalid");
+        printf("Column %d is %s.\n", i, results[i + 9] == 0 ? "valid" : "invalid");
     }
 
     for (int i = 0; i < 9; i++) {
         printf("Subgrid %d is %s.\n", i, results[i + 18] == 1 ? "valid" : "invalid");
     }
+
+    int all_valid = 1;
+    for (int i = 0; i < 27; i++) {
+        if (results[i] == 0) {
+            all_valid = 0;
+            break;
+        }
+    }
+
+    if (all_valid)
+        printf("\n[RESULT:VALID] - Sudoku puzzle is valid!\n");
+    else
+        printf("\n[RESULT:INVALID] - Sudoku puzzle is invalid!\n");
+
 
     return 0;
 }
