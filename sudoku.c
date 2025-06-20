@@ -26,6 +26,7 @@ int results[27] = {0};  // 9 rows + 9 cols + 9 boxes
 void *check_row(void *param) {
 
     parameters *p = (parameters *) param;
+    free(param); 
     int *valid = malloc(sizeof(int));   // Result being returned
     int seen[10] = {0};     // Tracks numbers already used
 
@@ -48,6 +49,7 @@ void *check_row(void *param) {
 void *check_column(void *param) {
 
     parameters *p = (parameters *) param;
+    free(param);
     int *valid = malloc(sizeof(int));   // Result being returned
     int seen[10] = {0};     // Tracks numbers already used
 
@@ -68,7 +70,9 @@ void *check_column(void *param) {
 
 // Validates a 3x3 subgrid starting at (row, column)
 void *check_subgrid(void *param) {
+    
     parameters *p = (parameters *) param;
+    free(param);
     int *valid = malloc(sizeof(int));
     int seen[10] = {0};  // Track digits 1–9
 
