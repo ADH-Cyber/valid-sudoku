@@ -44,28 +44,65 @@ void *check_row(void *param) {
 }
 
 
+// Validates a single column of the sudoku grid
+void *check_column(void *param) {
+
+    parameters *p = (parameters *) param;
+    int *valid = malloc(sizeof(int));   // Result being returned
+    int seen[10] = {0};     // Tracks numbers already used
+
+    // Loop through the column, check duplicates & invalid values
+    for (int i = 0; i < 9; i++) {
+        int num = sudoku_grid[i][p->column];
+        if (num < 1 || num > 9 || seen[num]) {
+            *valid = 0;     // Invalid column
+            pthread_exit(valid);
+        }
+        seen[num] = 1;      
+    }
+
+    *valid = 1; // Valid column
+    pthread_exit(valid);
+}
+
+
 int main()
 {
-    pthread_t row_threads[9]; // Threads to validate rows
+    pthread_t row_threads[9];     // Threads to validate rows
+    pthread_t col_threads[9];     // Threads to validate columns
 
-    // Loop through grid and create threads
+    // Check each row
     for (int i = 0; i < 9; i++) {
-        
-        // Allocate memory and specify parameters for validation
         parameters *data = malloc(sizeof(parameters));
         data->row = i;
-        data->column = 0;  // Unused, required by struct
-
+        data->column = 0;  // Not used
         pthread_create(&row_threads[i], NULL, check_row, data);
     }
 
-    // Join and collect results
+    // Store the results of each row
     for (int i = 0; i < 9; i++) {
         void *result;
         pthread_join(row_threads[i], &result);
         int *valid_ptr = (int *) result;
-        results[i] = *valid_ptr;
-        free(valid_ptr);  // Free result
+        results[i] = *valid_ptr;         // Store in results[0–8]
+        free(valid_ptr);
+    }
+
+    // Check each column
+    for (int i = 0; i < 9; i++) {
+        parameters *data = malloc(sizeof(parameters));
+        data->row = 0;                    // Not used
+        data->column = i;
+        pthread_create(&col_threads[i], NULL, check_column, data);
+    }
+
+    // Store the results of each column
+    for (int i = 0; i < 9; i++) {
+        void *result;
+        pthread_join(col_threads[i], &result);
+        int *valid_ptr = (int *) result;
+        results[i + 9] = *valid_ptr;      // Store in results[9–17]
+        free(valid_ptr);
     }
 
     // Print results
@@ -73,5 +110,10 @@ int main()
         printf("Row %d is %s.\n", i, results[i] == 1 ? "valid" : "invalid");
     }
 
+    for (int i = 0; i < 9; i++) {
+        printf("Column %d is %s.\n", i, results[i + 9] == 1 ? "valid" : "invalid");
+    }
+
     return 0;
 }
+
