@@ -1,6 +1,6 @@
-#include <stdio.h>     // For printf()
-#include <stdlib.h>    // For malloc() and exit()
-#include <pthread.h>   // For Pthreads
+#include <stdio.h>     // printf()
+#include <stdlib.h>    // malloc(), exit()
+#include <pthread.h>   // Pthreads
 
 int sudoku_grid[9][9] = {
         {5,3,4,6,7,8,9,1,2},
@@ -46,33 +46,32 @@ void *check_row(void *param) {
 
 int main()
 {
-    pthread_t thread;  // Thread to validate a row
+    pthread_t row_threads[9]; // Threads to validate rows
 
-    // Allocate memory 
-    parameters *data = malloc(sizeof(parameters));
+    // Loop through grid and create threads
+    for (int i = 0; i < 9; i++) {
+        
+        // Allocate memory and specify parameters for validation
+        parameters *data = malloc(sizeof(parameters));
+        data->row = i;
+        data->column = 0;  // Unused, required by struct
 
-    //Initialize parameters to specify which row to check
-    data->row = 0;
-    data->column = 0;  // Not used for row checking, but required by struct
+        pthread_create(&row_threads[i], NULL, check_row, data);
+    }
 
-    void *result;
+    // Join and collect results
+    for (int i = 0; i < 9; i++) {
+        void *result;
+        pthread_join(row_threads[i], &result);
+        int *valid_ptr = (int *) result;
+        results[i] = *valid_ptr;
+        free(valid_ptr);  // Free result
+    }
 
-    // Create and launch the thread to check row 0
-    pthread_create(&thread, NULL, check_row, data);
-
-    // Wait for the thread to finish and collect its result
-    pthread_join(thread, &result);
-
-    // Cast and evaluate the result (1 = valid, 0 = invalid)
-    int *valid_ptr = (int *) result;
-    if (*valid_ptr == 1)
-        printf("Row 0 is valid.\n");
-    else
-        printf("Row 0 is invalid.\n");
-
-    // Clean up allocated memory
-    free(valid_ptr);  
-    free(data);       
+    // Print results
+    for (int i = 0; i < 9; i++) {
+        printf("Row %d is %s.\n", i, results[i] == 1 ? "valid" : "invalid");
+    }
 
     return 0;
 }
