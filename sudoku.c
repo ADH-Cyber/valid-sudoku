@@ -6,7 +6,7 @@ int sudoku_grid[9][9] = {
         {5,3,4,6,7,8,9,1,2},
         {6,7,2,1,9,5,3,4,8},
         {1,9,8,3,4,2,5,6,7},
-        {8,5,9,7,6,1,4,2,3},
+        {8,5,1,7,6,1,4,2,3},
         {4,2,6,8,5,3,7,9,1},
         {7,1,3,9,2,4,8,5,6},
         {9,6,1,5,3,7,2,8,4},
@@ -66,6 +66,29 @@ void *check_column(void *param) {
 }
 
 
+// Validates a 3x3 subgrid starting at (row, column)
+void *check_subgrid(void *param) {
+    parameters *p = (parameters *) param;
+    int *valid = malloc(sizeof(int));
+    int seen[10] = {0};  // Track digits 1–9
+
+    // Loop over the 3x3 subgrid
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            int num = sudoku_grid[p->row + i][p->column + j];
+            if (num < 1 || num > 9 || seen[num]) {
+                *valid = 0;
+                pthread_exit(valid);
+            }
+            seen[num] = 1;
+        }
+    }
+
+    *valid = 1;
+    pthread_exit(valid);
+}
+
+
 int main()
 {
     pthread_t row_threads[9];     // Threads to validate rows
@@ -105,6 +128,29 @@ int main()
         free(valid_ptr);
     }
 
+    pthread_t subgrid_threads[9];
+int subgrid_idx = 0;
+
+// Create threads for each 3x3 subgrid
+for (int i = 0; i < 9; i += 3) {
+    for (int j = 0; j < 9; j += 3) {
+        parameters *data = malloc(sizeof(parameters));
+        data->row = i;
+        data->column = j;
+        pthread_create(&subgrid_threads[subgrid_idx], NULL, check_subgrid, data);
+        subgrid_idx++;
+    }
+}
+
+    // Join subgrid threads and store in results[18–26]
+    for (int i = 0; i < 9; i++) {
+        void *result;
+        pthread_join(subgrid_threads[i], &result);
+        int *valid_ptr = (int *) result;
+        results[i + 18] = *valid_ptr;
+        free(valid_ptr);
+    }
+
     // Print results
     for (int i = 0; i < 9; i++) {
         printf("Row %d is %s.\n", i, results[i] == 1 ? "valid" : "invalid");
@@ -112,6 +158,10 @@ int main()
 
     for (int i = 0; i < 9; i++) {
         printf("Column %d is %s.\n", i, results[i + 9] == 1 ? "valid" : "invalid");
+    }
+
+    for (int i = 0; i < 9; i++) {
+        printf("Subgrid %d is %s.\n", i, results[i + 18] == 1 ? "valid" : "invalid");
     }
 
     return 0;
