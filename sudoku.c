@@ -1,6 +1,6 @@
 #include <stdio.h>     // printf()
 #include <stdlib.h>    // malloc(), exit()
-#include <pthread.h>   // Pthreads
+#include <pthread.h>   // Pthreads,
 
 int sudoku_grid[9][9] = {
         {5,3,4,6,7,8,9,1,2},
