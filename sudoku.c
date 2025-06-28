@@ -2,6 +2,7 @@
 #include <stdlib.h>    // malloc(), exit()
 #include <pthread.h>   // Pthreads,
 
+// The grid being used for comparison
 int grid[9][9] = {
         {5,3,4,6,7,8,9,1,2},
         {6,7,2,1,9,5,3,4,8},
@@ -14,12 +15,14 @@ int grid[9][9] = {
         {3,4,5,2,8,6,1,7,9}
 };
 
+// Define the starting position for comparison
 typedef struct {
     int row;
     int column;
 } parameters;
 
-int results[27] = {0};  // 9 rows + 9 cols + 9 boxes
+// Results array
+int results[27] = {0};                  // 9 rows + 9 cols + 9 boxes
 
 
 // Validates a single row of the sudoku grid
@@ -27,20 +30,20 @@ void *check_row(void *param) {
 
     parameters *p = (parameters *) param;
     int *valid = malloc(sizeof(int));   // Result being returned
-    int seen[10] = {0};     // Tracks numbers already used
+    int seen[10] = {0};                 // Tracks numbers already used
 
     // Loop through the row, check duplicates & invalid values
     for (int i = 0; i < 9; i++) {
         int num = grid[p->row][i];
         if (num < 1 || num > 9 || seen[num]) {
-            *valid = 0;     // Invalid row
+            *valid = 0;                 // Invalid row
             free(param); 
             pthread_exit(valid);
         }
         seen[num] = 1;      
     }
 
-    *valid = 1; // Valid row
+    *valid = 1;                         // Valid row
     free(param); 
     pthread_exit(valid);
 }
@@ -75,14 +78,14 @@ void *check_subgrid(void *param) {
 
     parameters *p = (parameters *) param;
     int *valid = malloc(sizeof(int));
-    int seen[10] = {0};  // Track digits 1–9
+    int seen[10] = {0};                 // Track digits 1–9
 
     // Loop over the 3x3 subgrid
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             int num = grid[p->row + i][p->column + j];
             if (num < 1 || num > 9 || seen[num]) {
-                *valid = 0;
+                *valid = 0;             // Subgrid is invalid
                 free(param); 
                 pthread_exit(valid);
             }
@@ -90,7 +93,7 @@ void *check_subgrid(void *param) {
         }
     }
 
-    *valid = 1;
+    *valid = 1;                         // Subgrid is valid
     free(param); 
     pthread_exit(valid);
 }
@@ -98,14 +101,16 @@ void *check_subgrid(void *param) {
 
 int main()
 {
-    pthread_t row_threads[9];     // Threads to validate rows
-    pthread_t col_threads[9];     // Threads to validate columns
+    // Create threads
+    pthread_t row_threads[9];     
+    pthread_t col_threads[9];     
+    pthread_t subgrid_threads[9];
 
     // Check each row
     for (int i = 0; i < 9; i++) {
         parameters *data = malloc(sizeof(parameters));
         data->row = i;
-        data->column = 0;  // Not used
+        data->column = 0;               // Not used
         pthread_create(&row_threads[i], NULL, check_row, data);
     }
 
@@ -135,10 +140,8 @@ int main()
         free(valid_ptr);
     }
 
-    pthread_t subgrid_threads[9];
+    // Check each 3x3 subgrid
     int subgrid_idx = 0;
-
-    // Create threads for each 3x3 subgrid
     for (int i = 0; i < 9; i += 3) {
         for (int j = 0; j < 9; j += 3) {
             parameters *data = malloc(sizeof(parameters));
@@ -184,7 +187,7 @@ int main()
     else
         printf("\n[RESULTS:INVALID] - Sudoku puzzle is invalid!\n");
 
-    // DEBBUGGING - Block comment if unneeded
+    // --- DEBBUGGING - Block comment if unneeded
     // Ensures that valid is returning a valid integer
     printf("\nDEBUG: result bits = ");
     for (int i = 0; i < 27; i++) {
