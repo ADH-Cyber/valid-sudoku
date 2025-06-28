@@ -1,6 +1,25 @@
-#include <stdio.h>     // printf()
-#include <stdlib.h>    // malloc(), exit()
-#include <pthread.h>   // Pthreads,
+/*
+ * File: sudoku.c
+ * Author: Austin Howard
+ * Date: 2025-06-28
+ * 
+ * Description:
+ *  Use multithreading to validate a typical 9x9 sudoku puzzle using PThreads. Each of 
+ *  its 27 threads validates their respective row, column, or 3x3 subgrid and returns
+ *  whether or not it is valid.
+ * 
+ * Course: 
+ *  CS7349 - Operating Systems
+ *  Dr. Maya El Dayeh
+ *  Southern Methodist University
+ * 
+ * Compile using:
+ *  gcc -pthread -o sudoku sudoku_validator.c
+*/
+
+#include <stdio.h>                          // printf()
+#include <stdlib.h>                         // malloc(), exit()
+#include <pthread.h>                        // Pthreads
 
 // The grid being used for comparison
 int grid[9][9] = {
