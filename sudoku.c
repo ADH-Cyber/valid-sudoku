@@ -6,7 +6,7 @@ int grid[9][9] = {
         {5,3,4,6,7,8,9,1,2},
         {6,7,2,1,9,5,3,4,8},
         {1,9,8,3,4,2,5,6,7},
-        {8,5,9,7,6,1,4,2,3},
+        {8,5,1,7,6,1,4,2,3},
         {4,2,6,8,5,3,7,9,1},
         {7,1,3,9,2,4,8,5,6},
         {9,6,1,5,3,7,2,8,4},
@@ -48,26 +48,26 @@ void *check_row(void *param) {
 
 // Validates a single column of the sudoku grid
 void *check_column(void *param) {
-
     parameters *p = (parameters *) param;
     int *valid = malloc(sizeof(int));   // Result being returned
-    int seen[10] = {0};     // Tracks numbers already used
+    int seen[10] = {0};                 // Tracks numbers already used
 
     // Loop through the column, check duplicates & invalid values
     for (int i = 0; i < 9; i++) {
         int num = grid[i][p->column];
         if (num < 1 || num > 9 || seen[num]) {
-            *valid = 0;     // Invalid column
+            *valid = 0;                 // Invalid column
             free(param); 
             pthread_exit(valid);
         }
-        seen[num] = 1;      
+        seen[num] = 1;
     }
 
-    *valid = 1; // Valid column
-    free(param); 
+    *valid = 1;                         // Valid column
+    free(param);  
     pthread_exit(valid);
 }
+
 
 
 // Validates a 3x3 subgrid starting at (row, column)
@@ -164,7 +164,7 @@ int main()
     }
 
     for (int i = 0; i < 9; i++) {
-        printf("Column %d is %s.\n", i, results[i + 9] == 0 ? "valid" : "invalid");
+        printf("Column %d is %s.\n", i, results[i + 9] == 1 ? "valid" : "invalid");
     }
 
     for (int i = 0; i < 9; i++) {
@@ -182,7 +182,15 @@ int main()
     if (all_valid)
         printf("\n[RESULT:VALID] - Sudoku puzzle is valid!\n");
     else
-        printf("\n[RESULT:INVALID] - Sudoku puzzle is invalid!\n");
+        printf("\n[RESULTS:INVALID] - Sudoku puzzle is invalid!\n");
+
+    // DEBBUGGING - Block comment if unneeded
+    // Ensures that valid is returning a valid integer
+    printf("\nDEBUG: result bits = ");
+    for (int i = 0; i < 27; i++) {
+        printf("%d", results[i]);
+    }
+    printf("\n");
 
 
     return 0;
