@@ -101,6 +101,18 @@ void *check_subgrid(void *param) {
 
 int main()
 {
+    // Print evaluation grid with borders
+    printf("Sudoku Grid:\n");
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            printf("%d ", grid[i][j]);
+            if ((j + 1) % 3 == 0 && j < 8) printf("| ");
+        }
+        printf("\n");
+        if ((i + 1) % 3 == 0 && i < 8) printf("---------------------\n");
+    }
+    printf("\n");
+
     // Create threads
     pthread_t row_threads[9];     
     pthread_t col_threads[9];     
