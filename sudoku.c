@@ -9,7 +9,7 @@
  *  whether or not it is valid.
  * 
  * Course: 
- *  CS7349 - Operating Systems
+ *  CS7343 - Operating Systems
  *  Dr. Maya El Dayeh
  *  Southern Methodist University
  * 
